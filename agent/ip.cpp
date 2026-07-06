@@ -1,5 +1,5 @@
 //#include <stdio.h>
-#include <string.h>
+#include <cstring>
 #include <string>
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -9,7 +9,7 @@
 
 std::string getip()
 {
-    struct ifreq ifr;
+    struct ifreq ifr{};
     memset(&ifr, 0, sizeof(ifr));
     strcpy(ifr.ifr_name, "eth0");
 
