@@ -5,10 +5,13 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(lnos-server
         server/main.cpp
-        server/main.h
 )
+
+target_include_directories(lnos-server PRIVATE server)
 
 add_executable(lnos-agent
         agent/main.cpp
-        agent/main.h
+        agent/ip.cpp
 )
+
+target_include_directories(lnos-agent PRIVATE agent)
