@@ -6,9 +6,7 @@
 #include <unistd.h>
 #include "ip.h"
 #include "../shared/protocol.h"
-
-#define SERVER_IP "127.0.0.1"
-#define PORT 4545
+#include "main.h"
 
 std::string getName() {
     std::string name;

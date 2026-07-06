@@ -31,4 +31,9 @@ namespace lnos {
         return p;
     }
 
+    struct Node {
+        std::string name;
+        std::string ip;
+    };
+
 }

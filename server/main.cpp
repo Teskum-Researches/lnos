@@ -4,15 +4,10 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include "main.h"
+#include "protocol.h"
 
 #include "../shared/protocol.h"
-
-#define PORT 4545
-
-struct Node {
-    std::string name;
-    std::string ip;
-};
 
 std::unordered_map<std::string, Node> nodes;
 
