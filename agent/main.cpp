@@ -1,17 +1,30 @@
 #include <fstream>
 #include <iostream>
 #include <thread>
+#include <csignal>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <mutex>
 #include "ip.h"
 #include "protocol.h"
-#include "main.h"
-
+#include <atomic>
 #include <map>
 
 #include "registry.h"
+
+#define SERVER_IP "127.0.0.1"
+
+#define MCAST_GROUP "239.255.42.99"
+#define PORT 4545
+
+
+std::atomic<bool> running = true;
+
+void handleSigint(int) {
+    std::cout << "CTRL+C received\n";
+    running = false;
+}
 
 std::string getName() {
     std::string name;
@@ -42,7 +55,7 @@ void sender() {
 
     inet_pton(AF_INET, MCAST_GROUP, &addr.sin_addr);
 
-    while (true) {
+    while (running) {
         lnos::Packet p{myName};
 
         std::string msg = lnos::encode(p);
@@ -61,20 +74,18 @@ void sender() {
 void receiver() {
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
 
-    int reuse = 1;
+    timeval tv{};
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
 
-    setsockopt(sock,
-               SOL_SOCKET,
-               SO_REUSEADDR,
-               &reuse,
-               sizeof(reuse));
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(PORT);
     addr.sin_addr.s_addr = INADDR_ANY;
 
-    bind(sock, (sockaddr*)&addr, sizeof(addr));
+    bind(sock, reinterpret_cast<sockaddr *>(&addr), sizeof(addr));
 
     ip_mreq mreq{};
 
@@ -92,7 +103,7 @@ void receiver() {
 
     char buffer[1024];
 
-    while (true) {
+    while (running) {
         sockaddr_in senderAddr{};
         socklen_t senderLen = sizeof(senderAddr);
 
@@ -130,7 +141,7 @@ void receiver() {
 }
 
 void printer() {
-    while (true) {
+    while (running) {
         std::vector<std::string> toDelete;
         std::cout << "\033[2J\033[H";
         std::cout << "=== LNOS NODES ===" << std::endl;
@@ -158,6 +169,8 @@ void printer() {
 }
 
 int main() {
+    std::signal(SIGINT, handleSigint);
+
     std::thread t1(sender);
     std::thread t2(receiver);
     std::thread t3(printer);
@@ -165,4 +178,5 @@ int main() {
     t1.join();
     t2.join();
     t3.join();
+    std::cout << "LNOS shutting down..." << std::endl;
 }
