@@ -1,4 +1,3 @@
-#include <fstream>
 #include <iostream>
 #include <thread>
 #include <csignal>
@@ -6,12 +5,13 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <mutex>
-#include "ip.h"
-#include "protocol.h"
 #include <atomic>
 #include <map>
 
 #include "registry.h"
+#include <lnos/ip.h>
+#include <lnos/protocol.h>
+#include <lnos/config.h>
 
 #define SERVER_IP "127.0.0.1"
 
@@ -26,25 +26,12 @@ void handleSigint(int) {
     running = false;
 }
 
-std::string getName() {
-    std::string name;
-    std::ifstream nameFile("/etc/lnos/name");
-
-    if (!nameFile.is_open()) {
-        std::cerr << "lnos: Error: Unable to open the file" << std::endl;
-        return name;
-    }
-    nameFile >> name;
-
-    nameFile.close();
-
-    return name;
-}
 
 std::mutex nodesMutex;
 
-std::string myName = getName();
-std::string myIp = getip();
+lnos::Config cfg = lnos::loadConfig();
+std::string myName = cfg.nodeName;
+std::string myIp = getip(cfg.interface);
 
 void sender() {
     int sock = socket(AF_INET, SOCK_DGRAM, 0);

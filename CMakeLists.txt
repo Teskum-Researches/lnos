@@ -1,15 +1,40 @@
 cmake_minimum_required(VERSION 3.16)
+
 project(lnos)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(lnosd
-        agent/main.cpp
-        agent/ip.cpp
-        agent/registry.cpp
+
+#
+# liblnos
+#
+add_library(liblnos
+        liblnos/src/ip.cpp
+        liblnos/src/config.cpp
+)
+
+target_include_directories(liblnos
+        PUBLIC
+        liblnos/include
 )
 
 
-target_include_directories(lnosd PRIVATE shared)
+#
+# lnosd
+#
+add_executable(lnosd
+        lnosd/src/main.cpp
+        lnosd/src/registry.cpp
+)
 
-target_include_directories(lnosd PRIVATE agent)
+target_include_directories(lnosd
+        PRIVATE
+        lnosd/include
+)
+
+
+target_link_libraries(lnosd
+        PRIVATE
+        liblnos
+)
