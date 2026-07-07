@@ -10,6 +10,9 @@ namespace lnos {
     };
 
     Config loadConfig();
-    void createConfig();
+
+    bool setConfig(const std::string& key, const std::string& value);
+
+    bool createConfig();
 
 }
