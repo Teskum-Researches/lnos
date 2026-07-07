@@ -9,12 +9,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #
 # liblnos
 #
-add_library(liblnos
+add_library(lnos
         liblnos/src/ip.cpp
         liblnos/src/config.cpp
 )
 
-target_include_directories(liblnos
+add_library(lnos::lnos ALIAS lnos)
+
+target_include_directories(lnos
         PUBLIC
         liblnos/include
 )
@@ -33,8 +35,20 @@ target_include_directories(lnosd
         lnosd/include
 )
 
-
 target_link_libraries(lnosd
         PRIVATE
-        liblnos
+        lnos::lnos
+)
+
+
+#
+# lnosctl
+#
+add_executable(lnosctl
+        lnosctl/src/main.cpp
+)
+
+target_link_libraries(lnosctl
+        PRIVATE
+        lnos::lnos
 )

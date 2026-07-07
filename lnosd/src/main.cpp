@@ -30,7 +30,7 @@ void handleSigint(int) {
 std::mutex nodesMutex;
 
 lnos::Config cfg = lnos::loadConfig();
-std::string myName = cfg.nodeName;
+std::string myName = cfg.name;
 std::string myIp = getip(cfg.interface);
 
 void sender() {

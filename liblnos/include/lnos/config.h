@@ -5,7 +5,7 @@
 namespace lnos {
 
     struct Config {
-        std::string nodeName;
+        std::string name;
         std::string interface;
     };
 

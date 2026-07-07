@@ -13,7 +13,7 @@ namespace lnos {
         std::ifstream nameFile("/etc/lnos/name");
 
         if (nameFile.is_open()) {
-            nameFile >> cfg.nodeName;
+            nameFile >> cfg.name;
         }
 
 
@@ -96,9 +96,6 @@ namespace lnos {
 
     bool createConfig()
     {
-        if (geteuid() != 0)
-            return false;
-
         mkdir("/etc/lnos", 0755);
 
         std::ofstream nameFile("/etc/lnos/name");
