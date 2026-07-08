@@ -267,15 +267,21 @@ void printer() {
             std::cout << "\033[2J\033[H";
             std::cout << "=== LNOS NODES ===" << std::endl;
 
-            for (const auto& n : nodes) {
-                std::cout << n.second.name
-                          << " - " << n.second.ip
-                          << " Status: "
-                          << (n.second.status == NodeStatus::Online
-                              ? "Online"
-                              : "Offline")
-                          << std::endl;
-            }
+                for (const auto& n : nodes) {
+                    auto seconds = std::chrono::duration_cast<std::chrono::seconds>
+                    (std::chrono::steady_clock::now() - n.second.lastSeen).count();
+
+                    std::cout << n.second.name
+                              << " - " << n.second.ip
+                              << " Status: "
+                              << (n.second.status == NodeStatus::Online
+                                  ? "Online"
+                                  : "Offline");
+                    if (n.second.status == NodeStatus::Offline) {
+                        std::cout << "(" << seconds << " seconds ago)";
+                    }
+                    std::cout << std::endl;
+                }
         } // mutex освобождён здесь
 
 
