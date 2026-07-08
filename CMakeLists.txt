@@ -5,6 +5,8 @@ project(lnos)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+find_package(nlohmann_json REQUIRED)
+
 
 #
 # liblnos
@@ -52,3 +54,7 @@ target_link_libraries(lnosctl
         PRIVATE
         lnos::lnos
 )
+
+target_link_libraries(lnosd PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(lnos PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(lnosctl PRIVATE nlohmann_json::nlohmann_json)

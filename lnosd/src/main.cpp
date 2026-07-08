@@ -93,7 +93,16 @@ void sender() {
 
     while (running) {
 
-        lnos::Packet p{myName};
+        lnos::Packet p;
+        p.version = "1";
+        p.name = myName;
+
+        p.services.push_back({
+            "TEST",
+            43
+        });
+
+        //p.services = cfg.services;
 
         std::string msg = lnos::encode(p);
 
@@ -249,6 +258,7 @@ void receiver() {
         nodes[p.name] = {
             p.name,
             ip,
+            p.services,
             std::chrono::steady_clock::now(),
             NodeStatus::Online
         };
@@ -281,6 +291,17 @@ void printer() {
                         std::cout << "(" << seconds << " seconds ago)";
                     }
                     std::cout << std::endl;
+                    std::cout << "Services:\n";
+
+                    for (const auto& s : n.second.services)
+                    {
+                        std::cout
+                            << "  "
+                            << s.name
+                            << ":"
+                            << s.port
+                            << '\n';
+                    }
                 }
         } // mutex освобождён здесь
 
