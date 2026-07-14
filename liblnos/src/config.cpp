@@ -1,8 +1,8 @@
 #include <fstream>
+#include <sstream>
 #include <lnos/config.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
 
 namespace lnos {
 
@@ -21,6 +21,22 @@ namespace lnos {
 
         if (interfaceFile.is_open()) {
             interfaceFile >> cfg.interface;
+        }
+
+        std::ifstream servicesFile("/etc/lnos/services");
+
+        if (servicesFile.is_open()) {
+            std::string line;
+            while (std::getline(servicesFile, line)) {
+                std::stringstream ss(line);
+
+                Service service;
+
+                ss >> service.name;
+                ss >> service.port;
+
+                cfg.services.push_back(service);
+            }
         }
 
         return cfg;
@@ -73,6 +89,7 @@ namespace lnos {
             if (file.is_open()) {
                 std::string value;
                 file >> value;
+                return value;
             }
 
             return "";
@@ -85,6 +102,7 @@ namespace lnos {
             if (file.is_open()) {
                 std::string value;
                 file >> value;
+                return value;
             }
 
             return "";
@@ -96,25 +114,47 @@ namespace lnos {
 
     bool createConfig()
     {
-        mkdir("/etc/lnos", 0755);
+        if (access("/etc/lnos", F_OK) != 0)
+        {
+            if (mkdir("/etc/lnos", 0755) != 0)
+                return false;
+        }
 
-        std::ofstream nameFile("/etc/lnos/name");
+        if (access("/etc/lnos/name", F_OK) != 0)
+        {
+            std::ofstream nameFile("/etc/lnos/name");
 
-        if (!nameFile.is_open())
-            return false;
+            if (!nameFile.is_open())
+                return false;
 
-        nameFile << "default.node";
+            nameFile << "default.node";
+        }
 
-        std::ofstream interfaceFile("/etc/lnos/interface");
 
-        if (!interfaceFile.is_open())
-            return false;
+        if (access("/etc/lnos/interface", F_OK) != 0)
+        {
+            std::ofstream interfaceFile("/etc/lnos/interface");
 
-        interfaceFile << "eth0";
+            if (!interfaceFile.is_open())
+                return false;
+
+            interfaceFile << "eth0";
+        }
+
+
+        if (access("/etc/lnos/services", F_OK) != 0)
+        {
+            std::ofstream servicesFile("/etc/lnos/services");
+
+            if (!servicesFile.is_open())
+                return false;
+        }
+
 
         chmod("/etc/lnos", 0755);
         chmod("/etc/lnos/name", 0644);
         chmod("/etc/lnos/interface", 0644);
+        chmod("/etc/lnos/services", 0644);
 
         return true;
     }

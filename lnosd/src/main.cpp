@@ -13,8 +13,6 @@
 #include <lnos/protocol.h>
 #include <lnos/config.h>
 
-#define SERVER_IP "127.0.0.1"
-
 #define MCAST_GROUP "239.255.42.99"
 #define PORT 4545
 
@@ -30,9 +28,8 @@ void handleSigint(int) {
 std::mutex nodesMutex;
 std::mutex coutMutex;
 
-lnos::Config cfg = lnos::loadConfig();
-std::string myName = cfg.name;
-std::string myIp = getip(cfg.interface);
+lnos::Config cfg;
+std::string myIp;
 
 void sender() {
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -96,12 +93,8 @@ void sender() {
         lnos::Packet p;
         p.version = "1";
         p.type = lnos::PacketType::Announce;
-        p.name = myName;
-
-        p.services.push_back({
-            "TEST",
-            43
-        });
+        p.name = cfg.name;
+        p.services = cfg.services;
 
         //p.services = cfg.services;
 
@@ -333,7 +326,12 @@ void cleanup() {
 int main() {
     std::signal(SIGINT, handleSigint);
 
-    std::cout << "My name: " << myName << "\n";
+    lnos::createConfig();
+
+    cfg = lnos::loadConfig();
+    myIp = getip(cfg.interface);
+
+    std::cout << "My name: " << cfg.name << "\n";
     std::cout << "My IP: " << myIp << "\n";
 
     std::thread t1(sender);

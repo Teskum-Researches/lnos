@@ -5,6 +5,13 @@
 int main(int argc, char** argv)
 {
     auto cfg = lnos::loadConfig();
+
+    if (argc < 2)
+    {
+        std::cout << "Usage: lnosctl <command>\n";
+        return 1;
+    }
+
     std::string command = argv[1];
 
     if (command == "init") {
@@ -13,8 +20,6 @@ int main(int argc, char** argv)
         lnos::createConfig();
         return 0;
     } else if (command == "config") {
-        if (geteuid() != 0) return 1;
-
         std::cout << "Node Name: " << cfg.name << std::endl;
         std::cout << "Network Interface: " << cfg.interface << std::endl;
 
@@ -30,7 +35,6 @@ int main(int argc, char** argv)
 
         return 0;
     } else if (command == "get") {
-        if (geteuid() != 0) return 1;
         if (argv[2] == nullptr) return 1;
 
         std::string key = argv[2];

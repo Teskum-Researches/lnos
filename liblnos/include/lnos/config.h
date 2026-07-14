@@ -1,12 +1,16 @@
 #pragma once
 
 #include <string>
+#include <vector>
+
+#include "protocol.h"
 
 namespace lnos {
 
     struct Config {
         std::string name;
         std::string interface;
+        std::vector<Service> services;
     };
 
     Config loadConfig();
