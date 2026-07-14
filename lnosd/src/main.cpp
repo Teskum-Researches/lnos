@@ -6,8 +6,10 @@
 #include <unistd.h>
 #include <mutex>
 #include <atomic>
-#include <map>
+#include <array>
+#include <sodium.h>
 
+#include <lnos/crypto.h>
 #include "registry.h"
 #include <lnos/ip.h>
 #include <lnos/protocol.h>
@@ -24,12 +26,32 @@ void handleSigint(int) {
     running = false;
 }
 
-
+std::array<std::uint8_t, PUBLIC_KEY_SIZE> publicKey;
 std::mutex nodesMutex;
 std::mutex coutMutex;
 
 lnos::Config cfg;
 std::string myIp;
+
+bool signPacket(lnos::Packet& packet,
+                const std::array<uint8_t, PRIVATE_KEY_SIZE>& privateKey)
+{
+    lnos::Blob data = lnos::encode(packet);
+
+    // Важно: кодируем без signature
+
+    unsigned long long signatureLength;
+
+    crypto_sign_detached(
+        packet.signature.data(),
+        &signatureLength,
+        data.data(),
+        data.size(),
+        privateKey.data()
+    );
+
+    return signatureLength == crypto_sign_BYTES;
+}
 
 void sender() {
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -87,16 +109,28 @@ void sender() {
               MCAST_GROUP,
               &addr.sin_addr);
 
+    auto privateKey = lnos::loadPrivateKey();
+    auto publicKey = lnos::loadPublicKey();
 
     while (running) {
 
         lnos::Packet p;
-        p.version = "1";
+
+        p.version = std::to_string(PROTOCOL_VERSION);
         p.type = lnos::PacketType::Announce;
+
+        p.publicKey = publicKey;
+
         p.name = cfg.name;
         p.services = cfg.services;
 
-        //p.services = cfg.services;
+
+        if (!lnos::signPacket(p, privateKey))
+        {
+            std::cerr << "Signing failed\n";
+            continue;
+        }
+
 
         lnos::Blob msg = lnos::encode(p);
 

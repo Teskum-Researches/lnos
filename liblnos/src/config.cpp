@@ -3,6 +3,9 @@
 #include <lnos/config.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <stdexcept>
+
+#include <lnos/crypto.h>
 
 namespace lnos {
 

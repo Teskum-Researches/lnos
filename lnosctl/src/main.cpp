@@ -1,6 +1,26 @@
 #include <iostream>
-#include <lnos/config.h>
+#include <fstream>
 #include <unistd.h>
+#include <sodium.h>
+#include <lnos/config.h>
+
+bool generateKeys() {
+    if (sodium_init() < 0) {
+        std::cout << "Failed to initialize libsodium!\n";
+    } if (geteuid() != 0) return false;
+
+    unsigned char publicKey[crypto_sign_PUBLICKEYBYTES];
+    unsigned char privateKey[crypto_sign_SECRETKEYBYTES];
+
+    crypto_sign_keypair(publicKey, privateKey);
+
+    std::ofstream("/etc/lnos/public.key", std::ios::binary)
+        .write(reinterpret_cast<char*>(publicKey), crypto_sign_PUBLICKEYBYTES);
+
+    std::ofstream("/etc/lnos/private.key", std::ios::binary)
+        .write(reinterpret_cast<char*>(privateKey), crypto_sign_SECRETKEYBYTES);
+    return true;
+}
 
 int main(int argc, char** argv)
 {
@@ -12,6 +32,9 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    if (argv[1] == "generatekeys") {
+        if (geteuid() == 0) generateKeys();
+    }
     std::string command = argv[1];
 
     if (command == "init") {
