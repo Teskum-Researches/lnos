@@ -1,30 +1,10 @@
 #pragma once
 #include <string>
 
-/*{
-  "version": "1",
-  "type": "announce",
-  "name": "teskum.pc.gervaty",
-  "services": [
-    {
-      "name": "SSH",
-      "port": 22
-    },
-    {
-      "name": "HTTP",
-      "port": 80
-    },
-    {
-      "name": "Minecraft",
-      "port": 25565
-    }
-  ]
-}*/
-
 namespace lnos {
 
-    enum PacketType {
-        PacketTypeAnnounce = 0,
+    enum class PacketType {
+        Announce
     };
 
     struct Service {

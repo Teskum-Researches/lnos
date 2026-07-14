@@ -95,7 +95,7 @@ void sender() {
 
         lnos::Packet p;
         p.version = "1";
-        p.type = lnos::PacketTypeAnnounce;
+        p.type = lnos::PacketType::Announce;
         p.name = myName;
 
         p.services.push_back({

@@ -52,7 +52,3 @@ target_link_libraries(lnosctl
         PRIVATE
         lnos::lnos
 )
-
-target_link_libraries(lnosd PRIVATE)
-target_link_libraries(lnos PRIVATE)
-target_link_libraries(lnosctl PRIVATE)
