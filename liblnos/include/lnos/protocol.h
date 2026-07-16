@@ -8,7 +8,7 @@
 constexpr std::size_t PUBLIC_KEY_SIZE = 32;
 constexpr std::size_t PRIVATE_KEY_SIZE = 64;
 constexpr std::size_t SIGNATURE_SIZE = 64;
-constexpr int PROTOCOL_VERSION = 2;
+constexpr int PROTOCOL_VERSION = 3;
 
 /*
 +----------------+
@@ -36,18 +36,46 @@ namespace lnos {
         uint16_t port;
     };
 
+    struct PacketAnnounce {
+        std::string name;
+        std::vector<Service> services;
+
+        PacketAnnounce(std::string name, std::vector<Service> services)
+            : name(name), services(services)
+        {}
+
+        ~PacketAnnounce()
+        {}
+    };
+
+    union PacketAs {
+      PacketAnnounce announce;
+
+      ~PacketAs()
+      {}
+    };
+
     struct Packet {
         std::string version;
         PacketType type;
+        PacketAs as;
         std::array<std::uint8_t, PUBLIC_KEY_SIZE> publicKey;
-        std::string name;
-        std::vector<Service> services;
         std::array<std::uint8_t, SIGNATURE_SIZE> signature;
+
+        Packet()
+            : version(std::to_string(PROTOCOL_VERSION)),
+              type(PacketType::Announce),
+              as(PacketAnnounce({}, {}))
+        {}
+
+        Packet(std::string name, std::vector<Service> services)
+            : version(std::to_string(PROTOCOL_VERSION)),
+              type(PacketType::Announce),
+              as(PacketAnnounce(name, services))
+        {}
     };
 
     using Blob = std::vector<uint8_t>;
-
-    Blob encodeWithoutSignature(const Packet& p);
 
     struct EncodedPacket {
         uint8_t *data;
@@ -123,24 +151,30 @@ namespace lnos {
         return true;
     }
 
-    inline Blob encode(const Packet& p) {
+    inline Blob encode(const Packet& p, bool includeSignature) {
         Blob blob;
 
         blobPush(blob, p.version);
         blobPush(blob, (uint16_t) p.type);
-        blobPush(blob, p.publicKey);
-        blobPush(blob, p.name);
 
-        uint64_t len = p.services.size();
-        blobPush(blob, len);
+        switch (p.type) {
+        case PacketType::Announce: {
+          blobPush(blob, p.as.announce.name);
 
-        for (const auto& s : p.services)
-        {
+          uint64_t len = p.as.announce.services.size();
+          blobPush(blob, len);
+
+          for (const auto& s : p.as.announce.services)
+          {
             blobPush(blob, s.name);
             blobPush(blob, s.port);
+          }
+        } break;
         }
 
-        blobPush(blob, p.signature);
+        blobPush(blob, p.publicKey);
+        if (includeSignature)
+          blobPush(blob, p.signature);
 
         return blob;
     }
@@ -157,21 +191,25 @@ namespace lnos {
         encodedPacketConsume(packet, type);
         result.type = (PacketType) type;
 
-        encodedPacketConsume(packet, result.publicKey);
-        encodedPacketConsume(packet, result.name);
+        switch (result.type) {
+        case PacketType::Announce: {
+          encodedPacketConsume(packet, result.as.announce.name);
 
-        uint64_t len = 0;
-        encodedPacketConsume(packet, len);
-        result.services.reserve(len);
+          uint64_t len = 0;
+          encodedPacketConsume(packet, len);
+          result.as.announce.services.reserve(len);
 
-        for (uint64_t i = 0; i < len; ++i)
-        {
+          for (uint64_t i = 0; i < len; ++i)
+          {
             Service service;
             encodedPacketConsume(packet, service.name);
             encodedPacketConsume(packet, service.port);
-            result.services.push_back(service);
+            result.as.announce.services.push_back(service);
+          }
+        } break;
         }
 
+        encodedPacketConsume(packet, result.publicKey);
         encodedPacketConsume(packet, result.signature);
 
         return true;

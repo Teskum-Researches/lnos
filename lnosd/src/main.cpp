@@ -35,7 +35,7 @@ std::string myIp;
 bool signPacket(lnos::Packet& packet,
                 const std::array<uint8_t, PRIVATE_KEY_SIZE>& privateKey)
 {
-    lnos::Blob data = lnos::encode(packet);
+    lnos::Blob data = lnos::encode(packet, true);
 
     // Важно: кодируем без signature
 
@@ -113,16 +113,9 @@ void sender() {
 
     while (running) {
 
-        lnos::Packet p;
-
-        p.version = std::to_string(PROTOCOL_VERSION);
-        p.type = lnos::PacketType::Announce;
+        lnos::Packet p(cfg.name, cfg.services);
 
         p.publicKey = publicKey;
-
-        p.name = cfg.name;
-        p.services = cfg.services;
-
 
         if (!lnos::signPacket(p, privateKey))
         {
@@ -131,7 +124,7 @@ void sender() {
         }
 
 
-        lnos::Blob msg = lnos::encode(p);
+        lnos::Blob msg = lnos::encode(p, true);
 
         std::cout << "[debug] sending "
                   << msg.size()
@@ -207,18 +200,15 @@ void receiver() {
     if (inet_pton(AF_INET,
                   MCAST_GROUP,
                   &mreq.imr_multiaddr) <= 0) {
-
         perror("multicast address");
         close(sock);
         return;
     }
 
-
     // интерфейс
     if (inet_pton(AF_INET,
                   myIp.c_str(),
                   &mreq.imr_interface) <= 0) {
-
         perror("interface address");
         close(sock);
         return;
@@ -238,7 +228,6 @@ void receiver() {
 
 
     char buffer[1024];
-
 
     while (running) {
 
@@ -280,13 +269,15 @@ void receiver() {
         lnos::Packet p;
         if (lnos::decode(encoded, p)) {
             std::lock_guard<std::mutex> lock(nodesMutex);
-            nodes[p.name] = {
-                p.name,
-                ip,
-                p.services,
-                std::chrono::steady_clock::now(),
-                NodeStatus::Online
-            };
+            if (p.type == lnos::PacketType::Announce) {
+                nodes[p.as.announce.name] = {
+                    p.as.announce.name,
+                    ip,
+                    p.as.announce.services,
+                    std::chrono::steady_clock::now(),
+                    NodeStatus::Online
+                };
+            }
         } else {
             std::cerr << "[error] received invalid packet\n";
         }
@@ -302,7 +293,7 @@ void printer() {
         {
             std::lock_guard<std::mutex> lock(nodesMutex);
 
-            std::cout << "\033[2J\033[H";
+            // std::cout << "\033[2J\033[H";
             std::cout << "=== LNOS NODES ===" << std::endl;
 
                 for (const auto& n : nodes) {

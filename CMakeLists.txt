@@ -14,7 +14,6 @@ pkg_check_modules(SODIUM REQUIRED libsodium)
 #
 add_library(lnos
         liblnos/src/config.cpp
-        liblnos/src/protocol.cpp
         liblnos/src/crypto.cpp
 )
 
