@@ -12,7 +12,7 @@ namespace lnos {
         Packet& packet,
         const std::array<uint8_t, PRIVATE_KEY_SIZE>& privateKey)
     {
-        Blob data = encodeWithoutSignature(packet);
+        Blob data = encode(packet, false);
 
         unsigned long long len;
 
