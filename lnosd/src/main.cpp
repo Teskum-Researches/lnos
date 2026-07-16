@@ -31,7 +31,6 @@ std::mutex nodesMutex;
 std::mutex coutMutex;
 
 lnos::Config cfg;
-std::string myIp;
 
 void stopWithError(const std::string& message) {
     if (!running.exchange(false))
@@ -98,28 +97,6 @@ void sender() {
         return;
     }
 
-    // Указываем интерфейс для multicast
-    in_addr localInterface{};
-
-    if (inet_pton(AF_INET,
-                  myIp.c_str(),
-                  &localInterface) != 1) {
-        stopWithError("Invalid local IPv4 address: '" + myIp + "'");
-        close(sock);
-        return;
-    }
-
-    if (setsockopt(sock,
-                   IPPROTO_IP,
-                   IP_MULTICAST_IF,
-                   &localInterface,
-                   sizeof(localInterface)) < 0) {
-        stopAfterSystemError("IP_MULTICAST_IF");
-        close(sock);
-        return;
-    }
-
-
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(PORT);
@@ -145,13 +122,11 @@ void sender() {
             break;
         }
 
-
         lnos::Blob msg = lnos::encode(p, true);
 
         std::cout << "[debug] sending "
                   << msg.size()
                   << " bytes\n";
-
 
         if (sendto(sock,
                    msg.data(),
@@ -190,7 +165,6 @@ void receiver() {
         return;
     }
 
-
     timeval tv{};
     tv.tv_sec = 1;
     tv.tv_usec = 0;
@@ -205,12 +179,10 @@ void receiver() {
         return;
     }
 
-
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(PORT);
     addr.sin_addr.s_addr = INADDR_ANY;
-
 
     if (bind(sock,
              reinterpret_cast<sockaddr*>(&addr),
@@ -221,9 +193,7 @@ void receiver() {
         return;
     }
 
-
     ip_mreq mreq{};
-
 
     // multicast адрес
     if (inet_pton(AF_INET,
@@ -234,13 +204,8 @@ void receiver() {
         return;
     }
 
-    // интерфейс
-    if (inet_pton(AF_INET, myIp.c_str(), &mreq.imr_interface) != 1) {
-        stopWithError("Invalid local IPv4 address: '" + myIp + "'");
-        close(sock);
-        return;
-    }
-
+    // ОС выберет интерфейс multicast по таблице маршрутизации.
+    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
 
     if (setsockopt(sock,
                    IPPROTO_IP,
@@ -252,7 +217,6 @@ void receiver() {
         close(sock);
         return;
     }
-
 
     char buffer[1024];
 
@@ -280,9 +244,7 @@ void receiver() {
         if (len == 0)
             continue;
 
-
         buffer[len] = 0;
-
 
         char ip[INET_ADDRSTRLEN];
 
@@ -294,32 +256,38 @@ void receiver() {
             break;
         }
 
-
         std::cout << "[debug] received "
                   << len
                   << " bytes from "
                   << ip
                   << "\n";
 
-
-        lnos::EncodedPacket encoded((uint8_t *) buffer, len);
+        lnos::EncodedPacket encoded((uint8_t *)buffer, len);
         lnos::Packet p;
-        if (lnos::decode(encoded, p)) {
-            std::lock_guard<std::mutex> lock(nodesMutex);
-            if (p.type == lnos::PacketType::Announce) {
-                nodes[p.as.announce.name] = {
-                    p.as.announce.name,
-                    ip,
-                    p.as.announce.services,
-                    std::chrono::steady_clock::now(),
-                    NodeStatus::Online
-                };
-            }
+
+        if (!lnos::decode(encoded, p)) {
+            std::cerr << "[error] received invalid packet\n";
+            return;
+        }
+
+        if (!lnos::verifyPacket(p)) {
+            std::cerr << "[error] invalid signature\n";
+            return;
+        }
+
+        std::lock_guard<std::mutex> lock(nodesMutex);
+        if (p.type == lnos::PacketType::Announce) {
+            nodes[p.as.announce.name] = {
+                p.as.announce.name,
+                ip,
+                p.as.announce.services,
+                std::chrono::steady_clock::now(),
+                NodeStatus::Online
+            };
         } else {
             std::cerr << "[error] received invalid packet\n";
         }
     }
-
 
     close(sock);
 }

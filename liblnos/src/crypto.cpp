@@ -58,5 +58,15 @@ namespace lnos {
         return privateKey;
     }
 
+    bool verifyPacket(const Packet& packet)
+    {
+        Blob blob = encode(packet, false);
+
+        return crypto_sign_verify_detached(
+            packet.signature.data(),
+            blob.data(),
+            blob.size(),
+            packet.publicKey.data()) == 0;
+    }
 
 }

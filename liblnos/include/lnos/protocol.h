@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <string>
+#include <utility>
 #include <vector>
 #include <cstdint>
 #include <cstring>
@@ -41,11 +42,11 @@ namespace lnos {
         std::vector<Service> services;
 
         PacketAnnounce(std::string name, std::vector<Service> services)
-            : name(name), services(services)
+            : name(std::move(name)), services(std::move(services))
         {}
 
         ~PacketAnnounce()
-        {}
+        = default;
     };
 
     union PacketAs {
@@ -177,6 +178,16 @@ namespace lnos {
           blobPush(blob, p.signature);
 
         return blob;
+    }
+
+    inline Blob encodeForSigning(const Packet& p)
+    {
+        return encode(p, false);
+    }
+
+    inline Blob encodeForSending(const Packet& p)
+    {
+        return encode(p, true);
     }
 
 #define encodedPacketConsume(blob, data)       \
