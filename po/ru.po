@@ -1,0 +1,83 @@
+# Russian translations for lnos package.
+# Copyright (C) 2026 THE lnos'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the lnos package.
+#  <vovahat099@gmail.com>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: lnos\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-16 21:46+0300\n"
+"PO-Revision-Date: 2026-07-16 21:54+0300\n"
+"Last-Translator:  <vovahat099@gmail.com>\n"
+"Language-Team: Russian <gnu@d07.ru>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: ../lnosd/src/main.cpp:42
+msgid "[fatal] "
+msgstr "[критически] "
+
+#: ../lnosd/src/main.cpp:43
+msgid "LNOS will now shut down.\n"
+msgstr "LNOS завершает работу.\n"
+
+#: ../lnosd/src/main.cpp:48
+msgid "Network operation failed: "
+msgstr "Ошибка сетевой операции: "
+
+#: ../lnosd/src/main.cpp:234
+msgid "Invalid multicast IPv4 address: '"
+msgstr "Неверный IPv4 мультикаст адрес: '"
+
+#: ../lnosd/src/main.cpp:241
+msgid "Invalid local IPv4 address: '"
+msgstr "Неверный локальный IPv4 адрес: '"
+
+#: ../lnosd/src/main.cpp:300
+msgid "[debug] received "
+msgstr "[отладка] получено "
+
+#: ../lnosd/src/main.cpp:302
+msgid " bytes from "
+msgstr " байт от "
+
+#: ../lnosd/src/main.cpp:321
+msgid "[error] received invalid packet\n"
+msgstr "[ошибка] получен неверный пакет\n"
+
+#: ../lnosd/src/main.cpp:336
+msgid "=== LNOS NODES ==="
+msgstr "=== НОДЫ LNOS ==="
+
+#: ../lnosd/src/main.cpp:344
+msgid " Status: "
+msgstr " Статус: "
+
+#: ../lnosd/src/main.cpp:346
+msgid "Online"
+msgstr "Онлайн"
+
+#: ../lnosd/src/main.cpp:347
+msgid "Offline"
+msgstr "Офлайн"
+
+#: ../lnosd/src/main.cpp:349
+msgid " seconds ago)"
+msgstr " секунд назад)"
+
+#: ../lnosd/src/main.cpp:352
+msgid "Services:\n"
+msgstr "Сервисы:\n"
+
+#: ../lnosd/src/main.cpp:398
+msgid "My name: "
+msgstr "Мое имя: "
+
+#: ../lnosd/src/main.cpp:409
+msgid "LNOS is stopped."
+msgstr "LNOS остановлен."
