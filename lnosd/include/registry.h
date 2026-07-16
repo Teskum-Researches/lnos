@@ -5,6 +5,7 @@
 #include <chrono>
 
 #include "lnos/protocol.h"
+#include <lnos/known_node.h>
 
 enum class NodeStatus {
     Online,
@@ -22,3 +23,4 @@ struct Node {
 };
 
 extern std::unordered_map<std::string, Node> nodes;
+extern std::unordered_map<std::string, lnos::KnownNode> knownNodes;

@@ -275,15 +275,39 @@ void receiver() {
             return;
         }
 
-        std::lock_guard<std::mutex> lock(nodesMutex);
         if (p.type == lnos::PacketType::Announce) {
-            nodes[p.as.announce.name] = {
+            const lnos::KnownNode knownNode{
                 p.as.announce.name,
-                ip,
-                p.as.announce.services,
-                std::chrono::steady_clock::now(),
-                NodeStatus::Online
+                p.publicKey
             };
+            bool saveKnownNode = false;
+
+            {
+                std::lock_guard<std::mutex> lock(nodesMutex);
+
+                nodes[p.as.announce.name] = {
+                    p.as.announce.name,
+                    ip,
+                    p.as.announce.services,
+                    std::chrono::steady_clock::now(),
+                    NodeStatus::Online
+                };
+
+                const auto it = knownNodes.find(knownNode.name);
+                saveKnownNode = it == knownNodes.end()
+                             || it->second.publicKey != knownNode.publicKey;
+            }
+
+            // Не записываем один и тот же ключ при каждом Announce.
+            if (saveKnownNode) {
+                if (!lnos::addKnownNode(knownNode)) {
+                    std::cerr << "[error] failed to save known node "
+                              << knownNode.name << "\n";
+                } else {
+                    std::lock_guard<std::mutex> lock(nodesMutex);
+                    knownNodes[knownNode.name] = knownNode;
+                }
+            }
         } else {
             std::cerr << "[error] received invalid packet\n";
         }
@@ -358,6 +382,7 @@ int main() {
     lnos::createConfig();
 
     cfg = lnos::loadConfig();
+    knownNodes = lnos::loadKnownNodes();
     std::cout << "My name: " << cfg.name << "\n";
 
     std::thread t1(sender);

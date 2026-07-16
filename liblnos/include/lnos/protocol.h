@@ -11,21 +11,6 @@ constexpr std::size_t PRIVATE_KEY_SIZE = 64;
 constexpr std::size_t SIGNATURE_SIZE = 64;
 constexpr int PROTOCOL_VERSION = 3;
 
-/*
-+----------------+
-| version        |
-+----------------+
-| type           |
-+----------------+
-| public key     |  <-- who
-+----------------+
-| name           |
-+----------------+
-| services       |
-+----------------+
-| signature      |  <-- proof (r.i.p)
-+----------------+ */
-
 namespace lnos {
 
     enum class PacketType {
