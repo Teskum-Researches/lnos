@@ -1,7 +1,7 @@
 # Russian translations for lnos package.
-# Copyright (C) 2026 THE lnos'S COPYRIGHT HOLDER
+# Copyright (C) 2026, Teskum Researches
 # This file is distributed under the same license as the lnos package.
-#  <vovahat099@gmail.com>, 2026.
+#  <vovahat099@gmail.com>, Ruslan Sokolov <gervatyy@gmail.com>, 2026.
 #
 msgid ""
 msgstr ""

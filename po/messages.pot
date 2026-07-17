@@ -1,9 +1,8 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# LNOS Translation Template
+# Copyright (C) 2026, Teskum Researches
 # This file is distributed under the same license as the lnos package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# <vovahat099@gmail.com>, Ruslan Sokolov <gervatyy@gmail.com>, 2026.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: lnos\n"
