@@ -390,7 +390,7 @@ void cleanup() {
 int main() {
     setlocale(LC_ALL, "");
 
-    bindtextdomain("lnos", "/usr/share/locale");
+    bindtextdomain("lnos", "/usr/local/share/locale");
     textdomain("lnos");
 
     std::signal(SIGINT, handleSigint);
