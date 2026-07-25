@@ -5,8 +5,7 @@
 #include <lnos/config.h>
 
 
-bool writeKey(const char* path, const unsigned char* key, std::size_t size)
-{
+bool writeKey(const char* path, const unsigned char* key, std::size_t size) {
     std::ofstream file(path, std::ios::binary | std::ios::trunc);
 
     if (!file.is_open()) {
@@ -35,11 +34,7 @@ bool generateKeys() {
     if (sodium_init() < 0) {
         std::cerr << "Failed to initialize libsodium!" << std::endl;
         return false;
-    } if (geteuid() != 0) {
-        std::cerr << "Must be run as root" << std::endl;
-        return false;
     }
-
     unsigned char publicKey[crypto_sign_PUBLICKEYBYTES];
     unsigned char privateKey[crypto_sign_SECRETKEYBYTES];
 
@@ -56,24 +51,28 @@ bool generateKeys() {
     return true;
 }
 
-void printUsage(char *program_name) {
-    std::cerr << "Usage: " << program_name << " <command>\n";
-    std::cerr << "Available commands:\n";
-    std::cerr << "    generatekeys          generate private and public keys for LNOS node\n";
-    std::cerr << "    init                  create LNOS config\n";
-    std::cerr << "    config                print LNOS config\n";
-    std::cerr << "    set                   override LNOS config property\n";
-    std::cerr << "    get                   print LNOS config property\n";
+void printUsage(const std::string& programName) {
+    std::cout << "Usage: " << programName << " <command>\n\n";
+
+    std::cout << "Commands:\n";
+    std::cout << "  * generatekeys   Generate public and private keys.\n";
+    std::cout << "  * init           Create the initial LNOS configuration.\n";
+    std::cout << "    config         Print the current configuration.\n";
+    std::cout << "  * set            Set a configuration property.\n";
+    std::cout << "    get            Get a configuration property.\n\n";
+
+    std::cout << "* Root privileges required.\n";
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     auto cfg = lnos::loadConfig();
 
-    if (argc < 2)
-    {
+    if (argc < 2) {
         printUsage(argv[0]);
         return 1;
+    } else if (strcmp(argv[1], "help") == 0) {
+        printUsage(argv[0]);
+        return 0;
     }
 
     std::string command = argv[1];
@@ -126,6 +125,6 @@ int main(int argc, char** argv)
         return 0;
     } else {
         printUsage(argv[0]);
-        std::cerr << "Unknown subcommand " << command << std::endl;
+        std::cerr << "Unknown command '" << command << "'" << std::endl;
     }
 }
