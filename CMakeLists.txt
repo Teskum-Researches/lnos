@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 
 project(lnos)
 
+include(GNUInstallDirs)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -30,7 +32,7 @@ foreach(LANG IN LISTS LANGUAGES)
                 list(APPEND MO_FILES ${MO_FILE})
 
                 install(FILES ${MO_FILE}
-                        DESTINATION "share/locale/${LANG}/LC_MESSAGES"
+                        DESTINATION "${CMAKE_INSTALL_LOCALEDIR}/${LANG}/LC_MESSAGES"
                 )
         endif()
 endforeach()
@@ -77,6 +79,10 @@ target_link_libraries(lnosd
         lnos::lnos
 )
 
+target_compile_definitions(lnosd PRIVATE
+        LOCALEDIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LOCALEDIR}"
+)
+
 
 #
 # lnosctl
@@ -88,4 +94,8 @@ add_executable(lnosctl
 target_link_libraries(lnosctl
         PRIVATE
         lnos::lnos
+)
+
+target_compile_definitions(lnosctl PRIVATE
+        LOCALEDIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LOCALEDIR}"
 )

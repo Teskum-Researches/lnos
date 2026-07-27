@@ -31,3 +31,7 @@ Thumbs.db
 
 # Optional: compiled database
 compile_commands.json
+
+# Translation files
+*.po~
+po/new.pot

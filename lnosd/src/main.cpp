@@ -128,7 +128,7 @@ void sender() {
     addr.sin_port = htons(PORT);
 
     if (inet_pton(AF_INET, MCAST_GROUP, &addr.sin_addr) != 1) {
-        stopWithError("Invalid multicast IPv4 address: '" MCAST_GROUP "'");
+        stopWithError(_("Invalid multicast IPv4 address: '") + std::string(MCAST_GROUP) + "'");
         close(sock);
         return;
     }
@@ -144,7 +144,7 @@ void sender() {
 
         if (!lnos::signPacket(p, privateKey))
         {
-            stopWithError("Packet signing failed");
+            stopWithError(_("Packet signing failed"));
             break;
         }
 
@@ -390,7 +390,7 @@ void cleanup() {
 int main() {
     setlocale(LC_ALL, "");
 
-    bindtextdomain("lnos", "/usr/local/share/locale");
+    bindtextdomain("lnos", LOCALEDIR);
     textdomain("lnos");
 
     std::signal(SIGINT, handleSigint);
