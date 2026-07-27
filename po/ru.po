@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lnos\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 17:27+0300\n"
+"POT-Creation-Date: 2026-07-27 22:46+0300\n"
 "PO-Revision-Date: 2026-07-16 21:54+0300\n"
 "Last-Translator:  <vovahat099@gmail.com>\n"
 "Language-Team: Russian <gnu@d07.ru>\n"
@@ -18,149 +18,186 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: lnosd/src/main.cpp:43
+#: ../lnosd/src/main.cpp:42
 msgid "[fatal] "
 msgstr "[критически] "
 
-#: lnosd/src/main.cpp:44
+#: ../lnosd/src/main.cpp:43
 msgid "LNOS will now shut down.\n"
 msgstr "LNOS завершает работу.\n"
 
-#: lnosd/src/main.cpp:49
+#: ../lnosd/src/main.cpp:48
 msgid "Network operation failed: "
 msgstr "Ошибка сетевой операции: "
 
-#: lnosd/src/main.cpp:110 lnosd/src/main.cpp:242
-msgid "Invalid local IPv4 address: '"
-msgstr "Неверный локальный IPv4 адрес: '"
-
-#: lnosd/src/main.cpp:131 lnosd/src/main.cpp:235
+#: ../lnosd/src/main.cpp:108 ../lnosd/src/main.cpp:205
 msgid "Invalid multicast IPv4 address: '"
 msgstr "Неверный IPv4 мультикаст адрес: '"
 
-#: lnosd/src/main.cpp:147
+#: ../lnosd/src/main.cpp:124
 msgid "Packet signing failed"
 msgstr "Ошибка подписи пакета"
 
-#: lnosd/src/main.cpp:301
+#: ../lnosd/src/main.cpp:263
 msgid "[debug] received "
 msgstr "[отладка] получено "
 
-#: lnosd/src/main.cpp:303
+#: ../lnosd/src/main.cpp:265
 msgid " bytes from "
 msgstr " байт от "
 
-#: lnosd/src/main.cpp:322
+#: ../lnosd/src/main.cpp:316
 msgid "[error] received invalid packet\n"
 msgstr "[ошибка] получен неверный пакет\n"
 
-#: lnosd/src/main.cpp:337
+#: ../lnosd/src/main.cpp:330
 msgid "=== LNOS NODES ==="
 msgstr "=== НОДЫ LNOS ==="
 
-#: lnosd/src/main.cpp:345
+#: ../lnosd/src/main.cpp:338
 msgid " Status: "
 msgstr " Статус: "
 
-#: lnosd/src/main.cpp:347
+#: ../lnosd/src/main.cpp:340
 msgid "Online"
 msgstr "Онлайн"
 
-#: lnosd/src/main.cpp:348
+#: ../lnosd/src/main.cpp:341
 msgid "Offline"
 msgstr "Офлайн"
 
-#: lnosd/src/main.cpp:350
+#: ../lnosd/src/main.cpp:343
 msgid " seconds ago)"
 msgstr " секунд назад)"
 
-#: lnosd/src/main.cpp:353
+#: ../lnosd/src/main.cpp:346
 msgid "Services:\n"
 msgstr "Сервисы:\n"
 
-#: lnosd/src/main.cpp:401
+#: ../lnosd/src/main.cpp:395
 msgid "My name: "
 msgstr "Мое имя: "
 
-#: lnosd/src/main.cpp:412
+#: ../lnosd/src/main.cpp:406
 msgid "LNOS is stopped."
 msgstr "LNOS остановлен."
 
-#: lnosctl/src/main.cpp:14
+#: ../lnosctl/src/main.cpp:15
 msgid "Cannot open "
 msgstr "Не получилось открыть"
 
-#: lnosctl/src/main.cpp:14
+#: ../lnosctl/src/main.cpp:15
 msgid " for writing\n"
 msgstr " для записи\n"
 
-#: lnosctl/src/main.cpp:22
+#: ../lnosctl/src/main.cpp:23
 msgid "Cannot write "
 msgstr "Не получилось записать"
 
-#: lnosctl/src/main.cpp:28
+#: ../lnosctl/src/main.cpp:29
 msgid "Cannot close "
 msgstr "Не получилось закрыть "
 
-#: lnosctl/src/main.cpp:37
+#: ../lnosctl/src/main.cpp:38
 msgid "Failed to initialize libsodium!"
 msgstr "Ошибка инициализации libsodium!"
 
-#: lnosctl/src/main.cpp:40 lnosctl/src/main.cpp:90 lnosctl/src/main.cpp:95
-#: lnosctl/src/main.cpp:107
-msgid "Must be run as root"
-msgstr "Необходимы root права"
-
-#: lnosctl/src/main.cpp:50
+#: ../lnosctl/src/main.cpp:47
 msgid "Failed to write public key"
 msgstr "Не получилось записать публичный ключ"
 
-#: lnosctl/src/main.cpp:54
+#: ../lnosctl/src/main.cpp:51
 msgid "Failed to write private key"
 msgstr "Не получилось записать приватный ключ"
 
-#: lnosctl/src/main.cpp:61
+#: ../lnosctl/src/main.cpp:58
 msgid "Usage: "
 msgstr "Использование: "
 
-#: lnosctl/src/main.cpp:61
-msgid " <command>\n"
-msgstr " <команда>\n"
-
-#: lnosctl/src/main.cpp:62
-msgid "Available commands:\n"
-msgstr "Доступные команды: \n"
-
-#: lnosctl/src/main.cpp:63
+#: ../lnosctl/src/main.cpp:58
 msgid ""
-"    generatekeys          generate private and public keys for LNOS node\n"
-msgstr "    generatekeys          сгенерировать приватный и публичный ключи для ноды LNOS\n"
+" <command>\n"
+"\n"
+msgstr ""
+" <команда>\n"
+"\n"
 
-#: lnosctl/src/main.cpp:64
-msgid "    init                  create LNOS config\n"
-msgstr "    init                  создать конфигурацию LNOS\n"
+#: ../lnosctl/src/main.cpp:60
+msgid "Commands:\n"
+msgstr "Команды:\n"
 
-#: lnosctl/src/main.cpp:65
-msgid "    config                print LNOS config\n"
-msgstr "    config                вывести конфигурацию LNOS\n"
+#: ../lnosctl/src/main.cpp:61
+msgid "  * generatekeys   Generate public and private keys.\n"
+msgstr "  * generatekeys   Сгенерировать публичный и приватный ключи.\n"
 
-#: lnosctl/src/main.cpp:66
-msgid "    set                   override LNOS config property\n"
-msgstr "    set                   перезаписать свойство конфигурации LNOS\n"
+#: ../lnosctl/src/main.cpp:62
+msgid "  * init           Create the initial LNOS configuration.\n"
+msgstr "  * init           Создать юазовую конфигурацию LNOS.\n"
 
-#: lnosctl/src/main.cpp:67
-msgid "    get                   print LNOS config property\n"
-msgstr "    get                   вывести свойство конфигурации LNOS\n"
+#: ../lnosctl/src/main.cpp:63
+msgid "    config         Print the current configuration.\n"
+msgstr "    config         Вывести текущую конфигурацию.\n"
 
-#: lnosctl/src/main.cpp:102 lnosctl/src/main.cpp:130
+#: ../lnosctl/src/main.cpp:64
+msgid "  * set            Set a configuration property.\n"
+msgstr "  * set            Задать свойство конфигурации.\n"
+
+#: ../lnosctl/src/main.cpp:65
+msgid ""
+"    get            Get a configuration property.\n"
+"\n"
+msgstr ""
+"    get            Вывести свойство конфигурации.\n"
+"\n"
+
+#: ../lnosctl/src/main.cpp:67
+msgid "* Root privileges required.\n"
+msgstr "* Нужны root права.\n"
+
+#: ../lnosctl/src/main.cpp:91 ../lnosctl/src/main.cpp:96
+#: ../lnosctl/src/main.cpp:108
+msgid "Must be run as root"
+msgstr "Необходимы root права"
+
+#: ../lnosctl/src/main.cpp:103 ../lnosctl/src/main.cpp:131
 #, fuzzy
 msgid "Node Name: "
-msgstr "Мое имя: "
+msgstr "Имя Ноды: "
 
-#: lnosctl/src/main.cpp:111 lnosctl/src/main.cpp:123
+#: ../lnosctl/src/main.cpp:112 ../lnosctl/src/main.cpp:124
 msgid "Not enough arguments"
 msgstr "Недостаточно аргументов"
 
-#: lnosctl/src/main.cpp:135
-msgid "Unknown subcommand "
-msgstr "Неизвестная подкоманда "
+#: ../lnosctl/src/main.cpp:136
+msgid "Unknown command '"
+msgstr "Неизвестная команда '"
+
+#~ msgid "Invalid local IPv4 address: '"
+#~ msgstr "Неверный локальный IPv4 адрес: '"
+
+#~ msgid " <command>\n"
+#~ msgstr " <команда>\n"
+
+#~ msgid "Available commands:\n"
+#~ msgstr "Доступные команды: \n"
+
+#~ msgid ""
+#~ "    generatekeys          generate private and public keys for LNOS node\n"
+#~ msgstr ""
+#~ "    generatekeys          сгенерировать приватный и публичный ключи для "
+#~ "ноды LNOS\n"
+
+#~ msgid "    init                  create LNOS config\n"
+#~ msgstr "    init                  создать конфигурацию LNOS\n"
+
+#~ msgid "    config                print LNOS config\n"
+#~ msgstr "    config                вывести конфигурацию LNOS\n"
+
+#~ msgid "    set                   override LNOS config property\n"
+#~ msgstr "    set                   перезаписать свойство конфигурации LNOS\n"
+
+#~ msgid "    get                   print LNOS config property\n"
+#~ msgstr "    get                   вывести свойство конфигурации LNOS\n"
+
+#~ msgid "Unknown subcommand "
+#~ msgstr "Неизвестная подкоманда "
