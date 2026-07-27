@@ -8,8 +8,7 @@
 
 #define _(string) gettext(string)
 
-bool writeKey(const char* path, const unsigned char* key, std::size_t size)
-{
+bool writeKey(const char* path, const unsigned char* key, std::size_t size) {
     std::ofstream file(path, std::ios::binary | std::ios::trunc);
 
     if (!file.is_open()) {
@@ -38,11 +37,7 @@ bool generateKeys() {
     if (sodium_init() < 0) {
         std::cerr << _("Failed to initialize libsodium!") << std::endl;
         return false;
-    } if (geteuid() != 0) {
-        std::cerr << _("Must be run as root") << std::endl;
-        return false;
     }
-
     unsigned char publicKey[crypto_sign_PUBLICKEYBYTES];
     unsigned char privateKey[crypto_sign_SECRETKEYBYTES];
 
@@ -59,18 +54,20 @@ bool generateKeys() {
     return true;
 }
 
-void printUsage(char *program_name) {
-    std::cerr << _("Usage: ") << program_name << _(" <command>\n");
-    std::cerr << _("Available commands:\n");
-    std::cerr << _("    generatekeys          generate private and public keys for LNOS node\n");
-    std::cerr << _("    init                  create LNOS config\n");
-    std::cerr << _("    config                print LNOS config\n");
-    std::cerr << _("    set                   override LNOS config property\n");
-    std::cerr << _("    get                   print LNOS config property\n");
+void printUsage(const std::string& programName) {
+    std::cout << _("Usage: ") << programName << _(" <command>\n\n");
+
+    std::cout << _("Commands:\n");
+    std::cout << _("  * generatekeys   Generate public and private keys.\n");
+    std::cout << _("  * init           Create the initial LNOS configuration.\n");
+    std::cout << _("    config         Print the current configuration.\n");
+    std::cout << _("  * set            Set a configuration property.\n");
+    std::cout << _("    get            Get a configuration property.\n\n");
+
+    std::cout << _("* Root privileges required.\n");
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     setlocale(LC_ALL, "");
 
     bindtextdomain("lnos", LOCALEDIR);
@@ -78,10 +75,12 @@ int main(int argc, char** argv)
 
     auto cfg = lnos::loadConfig();
 
-    if (argc < 2)
-    {
+    if (argc < 2) {
         printUsage(argv[0]);
         return 1;
+    } else if (strcmp(argv[1], "help") == 0) {
+        printUsage(argv[0]);
+        return 0;
     }
 
     std::string command = argv[1];
@@ -134,6 +133,6 @@ int main(int argc, char** argv)
         return 0;
     } else {
         printUsage(argv[0]);
-        std::cerr << _("Unknown subcommand ") << command << std::endl;
+        std::cerr << _("Unknown command '") << command << "'" << std::endl;
     }
 }

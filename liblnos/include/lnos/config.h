@@ -1,9 +1,11 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "protocol.h"
+#include <lnos/known_node.h>
 
 namespace lnos {
 
@@ -17,4 +19,9 @@ namespace lnos {
     bool setConfig(const std::string& key, const std::string& value);
 
     bool createConfig();
+
+    // Appends a node as: <name> <hex-encoded public key>.
+    bool addKnownNode(const KnownNode& node);
+
+    std::unordered_map<std::string, KnownNode> loadKnownNodes();
 }
