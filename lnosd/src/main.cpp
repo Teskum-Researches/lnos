@@ -9,15 +9,18 @@
 #include <atomic>
 #include <array>
 #include <sodium.h>
+#include <libintl.h>
+#include <locale.h>
 
 #include <lnos/crypto.h>
 #include "registry.h"
 #include <lnos/protocol.h>
 #include <lnos/config.h>
 
+#define _(string) gettext(string)
+
 #define MCAST_GROUP "239.255.42.99"
 #define PORT 4545
-
 
 std::atomic<bool> running = true;
 
@@ -31,19 +34,18 @@ std::mutex nodesMutex;
 std::mutex coutMutex;
 
 lnos::Config cfg;
-std::string myIp;
 
 void stopWithError(const std::string& message) {
     if (!running.exchange(false))
         return;
 
-    std::cerr << "[fatal] " << message << "\n"
-              << "LNOS will now shut down.\n";
+    std::cerr << _("[fatal] ") << message << "\n"
+              << _("LNOS will now shut down.\n");
 }
 
 void stopAfterSystemError(const char* operation) {
     perror(operation);
-    stopWithError(std::string("Network operation failed: ") + operation);
+    stopWithError(std::string(_("Network operation failed: ")) + operation);
 }
 
 bool signPacket(lnos::Packet& packet,
@@ -98,34 +100,12 @@ void sender() {
         return;
     }
 
-    // Указываем интерфейс для multicast
-    in_addr localInterface{};
-
-    if (inet_pton(AF_INET,
-                  myIp.c_str(),
-                  &localInterface) != 1) {
-        stopWithError("Invalid local IPv4 address: '" + myIp + "'");
-        close(sock);
-        return;
-    }
-
-    if (setsockopt(sock,
-                   IPPROTO_IP,
-                   IP_MULTICAST_IF,
-                   &localInterface,
-                   sizeof(localInterface)) < 0) {
-        stopAfterSystemError("IP_MULTICAST_IF");
-        close(sock);
-        return;
-    }
-
-
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(PORT);
 
     if (inet_pton(AF_INET, MCAST_GROUP, &addr.sin_addr) != 1) {
-        stopWithError("Invalid multicast IPv4 address: '" MCAST_GROUP "'");
+        stopWithError(_("Invalid multicast IPv4 address: '") + std::string(MCAST_GROUP) + "'");
         close(sock);
         return;
     }
@@ -141,17 +121,15 @@ void sender() {
 
         if (!lnos::signPacket(p, privateKey))
         {
-            stopWithError("Packet signing failed");
+            stopWithError(_("Packet signing failed"));
             break;
         }
-
 
         lnos::Blob msg = lnos::encode(p, true);
 
         std::cout << "[debug] sending "
                   << msg.size()
                   << " bytes\n";
-
 
         if (sendto(sock,
                    msg.data(),
@@ -190,7 +168,6 @@ void receiver() {
         return;
     }
 
-
     timeval tv{};
     tv.tv_sec = 1;
     tv.tv_usec = 0;
@@ -205,12 +182,10 @@ void receiver() {
         return;
     }
 
-
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(PORT);
     addr.sin_addr.s_addr = INADDR_ANY;
-
 
     if (bind(sock,
              reinterpret_cast<sockaddr*>(&addr),
@@ -221,26 +196,19 @@ void receiver() {
         return;
     }
 
-
     ip_mreq mreq{};
-
 
     // multicast адрес
     if (inet_pton(AF_INET,
                   MCAST_GROUP,
                   &mreq.imr_multiaddr) != 1) {
-        stopWithError("Invalid multicast IPv4 address: '" MCAST_GROUP "'");
+        stopWithError(_("Invalid multicast IPv4 address: '") + std::string(MCAST_GROUP) + "'");
         close(sock);
         return;
     }
 
-    // интерфейс
-    if (inet_pton(AF_INET, myIp.c_str(), &mreq.imr_interface) != 1) {
-        stopWithError("Invalid local IPv4 address: '" + myIp + "'");
-        close(sock);
-        return;
-    }
-
+    // ОС выберет интерфейс multicast по таблице маршрутизации.
+    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
 
     if (setsockopt(sock,
                    IPPROTO_IP,
@@ -252,7 +220,6 @@ void receiver() {
         close(sock);
         return;
     }
-
 
     char buffer[1024];
 
@@ -280,9 +247,7 @@ void receiver() {
         if (len == 0)
             continue;
 
-
         buffer[len] = 0;
-
 
         char ip[INET_ADDRSTRLEN];
 
@@ -295,18 +260,35 @@ void receiver() {
         }
 
 
-        std::cout << "[debug] received "
+        std::cout << _("[debug] received ")
                   << len
-                  << " bytes from "
+                  << _(" bytes from ")
                   << ip
                   << "\n";
 
-
-        lnos::EncodedPacket encoded((uint8_t *) buffer, len);
+        lnos::EncodedPacket encoded((uint8_t *)buffer, len);
         lnos::Packet p;
-        if (lnos::decode(encoded, p)) {
-            std::lock_guard<std::mutex> lock(nodesMutex);
-            if (p.type == lnos::PacketType::Announce) {
+
+        if (!lnos::decode(encoded, p)) {
+            std::cerr << "[error] received invalid packet\n";
+            return;
+        }
+
+        if (!lnos::verifyPacket(p)) {
+            std::cerr << "[error] invalid signature\n";
+            return;
+        }
+
+        if (p.type == lnos::PacketType::Announce) {
+            const lnos::KnownNode knownNode{
+                p.as.announce.name,
+                p.publicKey
+            };
+            bool saveKnownNode = false;
+
+            {
+                std::lock_guard<std::mutex> lock(nodesMutex);
+
                 nodes[p.as.announce.name] = {
                     p.as.announce.name,
                     ip,
@@ -314,12 +296,26 @@ void receiver() {
                     std::chrono::steady_clock::now(),
                     NodeStatus::Online
                 };
+
+                const auto it = knownNodes.find(knownNode.name);
+                saveKnownNode = it == knownNodes.end()
+                             || it->second.publicKey != knownNode.publicKey;
+            }
+
+            // Не записываем один и тот же ключ при каждом Announce.
+            if (saveKnownNode) {
+                if (!lnos::addKnownNode(knownNode)) {
+                    std::cerr << "[error] failed to save known node "
+                              << knownNode.name << "\n";
+                } else {
+                    std::lock_guard<std::mutex> lock(nodesMutex);
+                    knownNodes[knownNode.name] = knownNode;
+                }
             }
         } else {
-            std::cerr << "[error] received invalid packet\n";
+            std::cerr << _("[error] received invalid packet\n");
         }
     }
-
 
     close(sock);
 }
@@ -331,7 +327,7 @@ void printer() {
             std::lock_guard<std::mutex> lock(nodesMutex);
 
             // std::cout << "\033[2J\033[H";
-            std::cout << "=== LNOS NODES ===" << std::endl;
+            std::cout << _("=== LNOS NODES ===") << std::endl;
 
                 for (const auto& n : nodes) {
                     auto seconds = std::chrono::duration_cast<std::chrono::seconds>
@@ -339,15 +335,15 @@ void printer() {
 
                     std::cout << n.second.name
                               << " - " << n.second.ip
-                              << " Status: "
+                              << _(" Status: ")
                               << (n.second.status == NodeStatus::Online
-                                  ? "Online"
-                                  : "Offline");
+                                  ? _("Online")
+                                  : _("Offline"));
                     if (n.second.status == NodeStatus::Offline) {
-                        std::cout << "(" << seconds << " seconds ago)";
+                        std::cout << "(" << seconds << _(" seconds ago)");
                     }
                     std::cout << std::endl;
-                    std::cout << "Services:\n";
+                    std::cout << _("Services:\n");
 
                     for (const auto& s : n.second.services)
                     {
@@ -385,12 +381,18 @@ void cleanup() {
 }
 
 int main() {
+    setlocale(LC_ALL, "");
+
+    bindtextdomain("lnos", LOCALEDIR);
+    textdomain("lnos");
+
     std::signal(SIGINT, handleSigint);
 
     lnos::createConfig();
 
     cfg = lnos::loadConfig();
-    std::cout << "My name: " << cfg.name << "\n";
+    knownNodes = lnos::loadKnownNodes();
+    std::cout << _("My name: ") << cfg.name << "\n";
 
     std::thread t1(sender);
     std::thread t2(receiver);
@@ -401,5 +403,5 @@ int main() {
     t2.join();
     t3.join();
     t4.join();
-    std::cout << "LNOS is stopped." << std::endl;
+    std::cout << _("LNOS is stopped.") << std::endl;
 }
