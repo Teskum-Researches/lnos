@@ -4,13 +4,16 @@
 #include <cerrno>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <unistd.h>
 #include <mutex>
 #include <atomic>
 #include <array>
 #include <sodium.h>
 #include <libintl.h>
-#include <locale.h>
+#include <clocale>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 #include <lnos/crypto.h>
 #include "registry.h"
@@ -23,6 +26,7 @@
 #define PORT 4545
 
 std::atomic<bool> running = true;
+int ctlSocket = -1;
 
 void handleSigint(int) {
     std::cout << "CTRL+C received\n";
@@ -40,12 +44,13 @@ void stopWithError(const std::string& message) {
         return;
 
     std::cerr << _("[fatal] ") << message << "\n"
-              << _("LNOS will now shut down.\n");
+              << _("LNOS will now shut down.") << "\n";
+    exit(EXIT_FAILURE);
 }
 
 void stopAfterSystemError(const char* operation) {
     perror(operation);
-    stopWithError(std::string(_("Network operation failed: ")) + operation);
+    stopWithError(std::string(_("Operation failed: ")) + operation);
 }
 
 bool signPacket(lnos::Packet& packet,
@@ -142,7 +147,8 @@ void sender() {
         }
 
 
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        for (int i = 0; i < 20 && running; i++)
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     close(sock);
@@ -313,7 +319,7 @@ void receiver() {
                 }
             }
         } else {
-            std::cerr << _("[error] received invalid packet\n");
+            std::cerr << _("[error] received invalid packet") << std::endl;
         }
     }
 
@@ -325,8 +331,6 @@ void printer() {
 
         {
             std::lock_guard<std::mutex> lock(nodesMutex);
-
-            // std::cout << "\033[2J\033[H";
             std::cout << _("=== LNOS NODES ===") << std::endl;
 
                 for (const auto& n : nodes) {
@@ -343,7 +347,7 @@ void printer() {
                         std::cout << "(" << seconds << _(" seconds ago)");
                     }
                     std::cout << std::endl;
-                    std::cout << _("Services:\n");
+                    std::cout << _("Services:") << std::endl;
 
                     for (const auto& s : n.second.services)
                     {
@@ -358,7 +362,8 @@ void printer() {
         } // mutex освобождён здесь
 
 
-        std::this_thread::sleep_for(std::chrono::seconds(10));
+        for (int i = 0; i < 100 && running; i++)
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 
@@ -376,32 +381,124 @@ void cleanup() {
             }
         }
 
-        std::this_thread::sleep_for(std::chrono::seconds(10));
+        for (int i = 0; i < 100 && running; i++)
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+}
+
+void ctlserver() {
+    int server = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (server == -1) stopAfterSystemError("socket");
+    int flags = fcntl(server, F_GETFL, 0);
+    fcntl(server, F_SETFL, flags | O_NONBLOCK);
+    ctlSocket = server;
+    sockaddr_un server_addr{AF_UNIX};
+
+    strcpy(server_addr.sun_path, "/run/lnos/lnosd.sock");
+
+    unlink("/run/lnos/lnosd.sock");
+    if (bind(server, (sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
+        stopAfterSystemError("bind");
+    }
+    chmod("/run/lnos/lnosd.sock", 0666);
+
+    if  (listen(server, SOMAXCONN) == -1) {
+        stopAfterSystemError("listen");
+    }
+
+    while (running) {
+        sockaddr_un client_addr{};
+        socklen_t len = sizeof(client_addr);
+
+        int client = accept(server, (sockaddr*)&client_addr, &len);
+        if (client == -1) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                std::this_thread::sleep_for(
+                    std::chrono::milliseconds(100)
+                );
+                continue;
+            }
+            if (!running)
+                break;
+
+            stopAfterSystemError("accept");
+        }
+        int cflags = fcntl(client, F_GETFL, 0);
+        fcntl(client, F_SETFL, cflags | O_NONBLOCK);
+
+        char buffer[1024];
+        ssize_t received = recv(client, buffer, sizeof(buffer), 0);
+
+        if (received <= 0) {
+            close(client);
+            continue;
+        }
+
+        std::string response;
+        std::stringstream rstream;
+        std::string cmd(buffer, received);
+        if (cmd == "LIST\n") {
+            {
+                std::lock_guard<std::mutex> lock(nodesMutex);
+                for (const auto& n : nodes) {
+                    auto seconds = std::chrono::duration_cast<std::chrono::seconds>
+                    (std::chrono::steady_clock::now() - n.second.lastSeen).count();
+                    rstream << n.second.name
+                              << " - " << n.second.ip
+                              << _(" Status: ")
+                              << (n.second.status == NodeStatus::Online
+                                  ? _("Online")
+                                  : _("Offline"));
+                    if (n.second.status == NodeStatus::Offline) {
+                        rstream << "(" << seconds << _(" seconds ago") << "";
+                    }
+                    rstream << std::endl;
+                    rstream << _("Services:") << std::endl;
+
+                    for (const auto& s : n.second.services) {
+                        rstream << "  " << s.name << ":" << s.port << '\n';
+                    }
+                }
+                rstream << std::endl;
+                response += rstream.str();
+            }
+            send(client, response.data(), response.size(), 0);
+            close(client);
+        }
+    }
+    close(server);
+    unlink("/run/lnos/lnosd.sock");
 }
 
 int main() {
     setlocale(LC_ALL, "");
 
     bindtextdomain("lnos", LOCALEDIR);
+    bind_textdomain_codeset("lnos", "UTF-8");
     textdomain("lnos");
 
     std::signal(SIGINT, handleSigint);
+    std::signal(SIGTERM, handleSigint);
 
-    lnos::createConfig();
+    if (geteuid() != 0) {
+        std::cerr << "warning: lnosd is not running as root" << std::endl;
+    } else {
+        lnos::createConfig();
+    }
 
     cfg = lnos::loadConfig();
     knownNodes = lnos::loadKnownNodes();
-    std::cout << _("My name: ") << cfg.name << "\n";
 
     std::thread t1(sender);
     std::thread t2(receiver);
     std::thread t3(printer);
     std::thread t4(cleanup);
+    std::thread t5(ctlserver);
 
     t1.join();
     t2.join();
     t3.join();
     t4.join();
+    t5.join();
     std::cout << _("LNOS is stopped.") << std::endl;
 }

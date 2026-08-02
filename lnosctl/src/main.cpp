@@ -4,7 +4,9 @@
 #include <sodium.h>
 #include <lnos/config.h>
 #include <libintl.h>
-#include <locale.h>
+#include <clocale>
+#include <sys/un.h>
+#include <sys/socket.h>
 
 #define _(string) gettext(string)
 
@@ -12,7 +14,7 @@ bool writeKey(const char* path, const unsigned char* key, std::size_t size) {
     std::ofstream file(path, std::ios::binary | std::ios::trunc);
 
     if (!file.is_open()) {
-        std::cerr << _("Cannot open ") << path << _(" for writing\n");
+        std::cerr << _("Cannot open ") << path << _(" for writing") << std::endl;
         return false;
     }
 
@@ -55,22 +57,24 @@ bool generateKeys() {
 }
 
 void printUsage(const std::string& programName) {
-    std::cout << _("Usage: ") << programName << _(" <command>\n\n");
+    std::cout << _("Usage: ") << programName << _(" <command>") << "\n\n";
 
-    std::cout << _("Commands:\n");
-    std::cout << _("  * generatekeys   Generate public and private keys.\n");
-    std::cout << _("  * init           Create the initial LNOS configuration.\n");
-    std::cout << _("    config         Print the current configuration.\n");
-    std::cout << _("  * set            Set a configuration property.\n");
-    std::cout << _("    get            Get a configuration property.\n\n");
+    std::cout << _("Commands:") << "\n" ;
+    std::cout << _("  * generatekeys   Generate public and private keys.") << std::endl;
+    std::cout << _("  * init           Create the initial LNOS configuration.") << std::endl;
+    std::cout << _("    config         Print the current configuration.") << std::endl;
+    std::cout << _("  * set            Set a configuration property.") << std::endl;
+    std::cout << _("    get            Get a configuration property.") << "\n\n";
+    std::cout << _("  * nodes          List all nodes.") << std::endl;
 
-    std::cout << _("* Root privileges required.\n");
+    std::cout << _("* Root privileges required.") << std::endl;
 }
 
 int main(int argc, char** argv) {
     setlocale(LC_ALL, "");
 
     bindtextdomain("lnos", LOCALEDIR);
+    bind_textdomain_codeset("lnos", "UTF-8");
     textdomain("lnos");
 
     auto cfg = lnos::loadConfig();
@@ -131,6 +135,34 @@ int main(int argc, char** argv) {
             std::cout << _("Node Name: ") << cfg.name << std::endl;
         }
         return 0;
+    } else if (command == "nodes") {
+        sockaddr_un addr{AF_UNIX};
+        strncpy(addr.sun_path, "/run/lnos/lnosd.sock", sizeof(addr.sun_path) - 1);
+
+        int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+
+        if (sock == -1) {
+            perror("socket");
+            return 1;
+        }
+
+        if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
+            perror("connect");
+            close(sock);
+            return 1;
+        }
+
+        const char* cmd = "LIST\n";
+
+        send(sock, cmd, strlen(cmd), 0);
+
+        char buffer[1024];
+
+        ssize_t n;
+        while ((n = recv(sock, buffer, sizeof(buffer), 0)) > 0) {
+            std::cout.write(buffer, n);
+        }
+        close(sock);
     } else {
         printUsage(argv[0]);
         std::cerr << _("Unknown command '") << command << "'" << std::endl;

@@ -135,17 +135,14 @@ namespace lnos {
     }
 
 
-    bool createConfig()
-    {
-        if (access("/etc/lnos", F_OK) != 0)
-        {
+    bool createConfig() {
+        if (access("/etc/lnos", F_OK) != 0) {
             if (mkdir("/etc/lnos", 0755) != 0)
                 return false;
             chmod("/etc/lnos", 0755);
         }
 
-        if (access("/etc/lnos/name", F_OK) != 0)
-        {
+        if (access("/etc/lnos/name", F_OK) != 0) {
             std::ofstream nameFile("/etc/lnos/name");
 
             if (!nameFile.is_open())
@@ -155,8 +152,7 @@ namespace lnos {
             chmod("/etc/lnos/name", 0644);
         }
 
-        if (access("/etc/lnos/services", F_OK) != 0)
-        {
+        if (access("/etc/lnos/services", F_OK) != 0) {
             std::ofstream servicesFile("/etc/lnos/services");
 
             if (!servicesFile.is_open())
@@ -165,14 +161,17 @@ namespace lnos {
             chmod("/etc/lnos/services", 0644);
         }
 
-        if (access("/etc/lnos/known_nodes", F_OK) != 0)
-        {
+        if (access("/etc/lnos/known_nodes", F_OK) != 0) {
             std::ofstream knownNodesFile("/etc/lnos/known_nodes");
 
             if (!knownNodesFile.is_open())
                 return false;
 
             chmod("/etc/lnos/known_nodes", 0644);
+        }
+
+        if (access("/run/lnos", F_OK) != 0) {
+            if (mkdir("/run/lnos", 0755)) perror("mkdir");
         }
 
         return true;

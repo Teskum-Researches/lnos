@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(lnos)
+project(lnos VERSION 0.2.0)
 
 include(GNUInstallDirs)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(LANGUAGES "ru")
+set(LANGUAGES ru)
 set(TEXTDOMAIN "lnos")
 
 find_package(PkgConfig REQUIRED)
@@ -40,22 +40,22 @@ endforeach()
 add_custom_target(translations ALL DEPENDS ${MO_FILES})
 
 #
-# liblnos
+# lnoscommon
 #
-add_library(lnos
-        liblnos/src/config.cpp
-        liblnos/src/crypto.cpp
+add_library(lnoscommon
+        lnoscommon/src/config.cpp
+        lnoscommon/src/crypto.cpp
 )
 
-add_library(lnos::lnos ALIAS lnos)
+add_library(lnoscommon::lnoscommon ALIAS lnoscommon)
 
-target_include_directories(lnos
+target_include_directories(lnoscommon
         PUBLIC
-        liblnos/include
+        lnoscommon/include
         ${SODIUM_INCLUDE_DIRS}
 )
 
-target_link_libraries(lnos
+target_link_libraries(lnoscommon
         PUBLIC
         ${SODIUM_LIBRARIES}
 )
@@ -76,11 +76,12 @@ target_include_directories(lnosd
 
 target_link_libraries(lnosd
         PRIVATE
-        lnos::lnos
+        lnoscommon::lnoscommon
+        Intl::Intl
 )
 
 target_compile_definitions(lnosd PRIVATE
-        LOCALEDIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LOCALEDIR}"
+        LOCALEDIR="${CMAKE_INSTALL_FULL_LOCALEDIR}"
 )
 
 
@@ -93,9 +94,18 @@ add_executable(lnosctl
 
 target_link_libraries(lnosctl
         PRIVATE
-        lnos::lnos
+        lnoscommon::lnoscommon
+        Intl::Intl
 )
 
 target_compile_definitions(lnosctl PRIVATE
-        LOCALEDIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LOCALEDIR}"
+        LOCALEDIR="${CMAKE_INSTALL_FULL_LOCALEDIR}"
+)
+
+# Installation
+
+install(TARGETS
+        lnosd
+        lnosctl
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
