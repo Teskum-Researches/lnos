@@ -70,14 +70,14 @@ device.type.owner
 Example:
 
 ```text id="q1m8fd"
-pc.main.ruslan
-laptop.dev.ruslan
+pc.main.oxxide216
+laptop.dev.gervaty
 ```
 
 ## Node Lifecycle
 
 Nodes periodically announce their presence.
-If a node stops sending updates, it is considered offline and removed after a TTL period.
+If a node stops sending updates, it is considered offline.
 
 ---
 
@@ -118,6 +118,28 @@ If a node stops sending updates, it is considered offline and removed after a TT
 
 ---
 
+# AI Usage
+
+AI tools are used only for documentation purposes.
+
+They may be used to help with:
+
+* improving documentation readability;
+* checking Markdown formatting;
+* writing and structuring documentation files;
+* improving explanations and examples.
+
+AI is not used to:
+
+* generate source code;
+* design the system architecture;
+* make technical decisions;
+* replace developer reasoning or review.
+
+All source code, architecture decisions, and implementation details are created and reviewed by the project developer.
+
+---
+
 # Status
 
 LNOS is an early experimental system for exploring:
@@ -126,3 +148,11 @@ LNOS is an early experimental system for exploring:
 * service discovery mechanisms
 * overlay network design
 * systems programming in C++
+
+---
+
+# Documentation
+
+* [Building LNOS](BUILD.md)
+* [Installing LNOS](INSTALL.md)
+* [Using LNOS](USAGE.md)

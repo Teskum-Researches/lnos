@@ -34,4 +34,4 @@ compile_commands.json
 
 # Translation files
 *.po~
-po/new.pot
+locale
