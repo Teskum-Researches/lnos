@@ -1,4 +1,8 @@
 #!/bin/bash
+set -e
+
+mkdir -p locale/ru/LC_MESSAGES
+
 msgfmt \
-    locale/ru/LC_MESSAGES/lnos.po \
-    -o locale/ru/LC_MESSAGES/lnos.mo
+  po/ru.po \
+  -o locale/ru/LC_MESSAGES/lnos.mo

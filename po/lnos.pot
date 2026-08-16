@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-03 21:18+0300\n"
+"POT-Creation-Date: 2026-08-16 19:08+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -78,93 +78,101 @@ msgid "    get            Get a configuration property."
 msgstr ""
 
 #: lnosctl/src/main.cpp:68
+msgid "    send           Send message to node"
+msgstr ""
+
+#: lnosctl/src/main.cpp:69
 msgid "  * nodes          List all nodes."
 msgstr ""
 
-#: lnosctl/src/main.cpp:70
+#: lnosctl/src/main.cpp:71
 msgid "* Root privileges required."
 msgstr ""
 
-#: lnosctl/src/main.cpp:94 lnosctl/src/main.cpp:99 lnosctl/src/main.cpp:111
+#: lnosctl/src/main.cpp:96 lnosctl/src/main.cpp:101 lnosctl/src/main.cpp:113
 msgid "Must be run as root"
 msgstr ""
 
-#: lnosctl/src/main.cpp:106 lnosctl/src/main.cpp:134
+#: lnosctl/src/main.cpp:108 lnosctl/src/main.cpp:136
 msgid "Node Name: "
 msgstr ""
 
-#: lnosctl/src/main.cpp:115 lnosctl/src/main.cpp:127
+#: lnosctl/src/main.cpp:117 lnosctl/src/main.cpp:129 lnosctl/src/main.cpp:169
 msgid "Not enough arguments"
 msgstr ""
 
-#: lnosctl/src/main.cpp:167
+#: lnosctl/src/main.cpp:203
 msgid "Unknown command '"
 msgstr ""
 
-#: lnosd/src/main.cpp:47
+#: lnosd/src/main.cpp:48
 msgid "[fatal] "
 msgstr ""
 
-#: lnosd/src/main.cpp:48
+#: lnosd/src/main.cpp:49
 msgid "LNOS will now shut down."
 msgstr ""
 
-#: lnosd/src/main.cpp:54
+#: lnosd/src/main.cpp:55
 msgid "Operation failed: "
 msgstr ""
 
-#: lnosd/src/main.cpp:114 lnosd/src/main.cpp:212
+#: lnosd/src/main.cpp:76
+msgid "Node not found or offline: "
+msgstr ""
+
+#: lnosd/src/main.cpp:93
+msgid "Invalid node IP: "
+msgstr ""
+
+#: lnosd/src/main.cpp:170 lnosd/src/main.cpp:268
 msgid "Invalid multicast IPv4 address: '"
 msgstr ""
 
-#: lnosd/src/main.cpp:130
+#: lnosd/src/main.cpp:186
 msgid "Packet signing failed"
 msgstr ""
 
-#: lnosd/src/main.cpp:270
+#: lnosd/src/main.cpp:326
 msgid "[debug] received "
 msgstr ""
 
-#: lnosd/src/main.cpp:272
+#: lnosd/src/main.cpp:328
 msgid " bytes from "
 msgstr ""
 
-#: lnosd/src/main.cpp:323
+#: lnosd/src/main.cpp:379
 msgid "[error] received invalid packet"
 msgstr ""
 
-#: lnosd/src/main.cpp:335
+#: lnosd/src/main.cpp:493
 msgid "=== LNOS NODES ==="
 msgstr ""
 
-#: lnosd/src/main.cpp:343 lnosd/src/main.cpp:444
+#: lnosd/src/main.cpp:501 lnosd/src/main.cpp:606
 msgid " Status: "
 msgstr ""
 
-#: lnosd/src/main.cpp:345 lnosd/src/main.cpp:446
+#: lnosd/src/main.cpp:503 lnosd/src/main.cpp:608
 msgid "Online"
 msgstr ""
 
-#: lnosd/src/main.cpp:346 lnosd/src/main.cpp:447
+#: lnosd/src/main.cpp:504 lnosd/src/main.cpp:609
 msgid "Offline"
 msgstr ""
 
-#: lnosd/src/main.cpp:348
+#: lnosd/src/main.cpp:506
 msgid " seconds ago)"
 msgstr ""
 
-#: lnosd/src/main.cpp:351 lnosd/src/main.cpp:452
+#: lnosd/src/main.cpp:509 lnosd/src/main.cpp:614
 msgid "Services:"
 msgstr ""
 
-#: lnosd/src/main.cpp:449
+#: lnosd/src/main.cpp:611
 msgid " seconds ago"
 msgstr ""
 
-#: lnosd/src/main.cpp:487
-msgid "My name: "
-msgstr ""
-
-#: lnosd/src/main.cpp:500
+#: lnosd/src/main.cpp:679
 msgid "LNOS is stopped."
 msgstr ""

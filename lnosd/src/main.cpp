@@ -14,6 +14,7 @@
 #include <clocale>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <optional>
 
 #include <lnos/crypto.h>
 #include "registry.h"
@@ -23,7 +24,8 @@
 #define _(string) gettext(string)
 
 #define MCAST_GROUP "239.255.42.99"
-#define PORT 4545
+#define MCAST_PORT 4545
+#define MESSAGE_PORT 4546
 
 std::atomic<bool> running = true;
 int ctlSocket = -1;
@@ -51,6 +53,61 @@ void stopWithError(const std::string& message) {
 void stopAfterSystemError(const char* operation) {
     perror(operation);
     stopWithError(std::string(_("Operation failed: ")) + operation);
+}
+
+std::optional<std::string> getNodeIP(const std::string& nodeName) {
+    std::lock_guard<std::mutex> lock(nodesMutex);
+
+    auto it = nodes.find(nodeName);
+
+    if (it == nodes.end())
+        return std::nullopt;
+
+    if (it->second.status != NodeStatus::Online)
+        return std::nullopt;
+
+    return it->second.ip;
+}
+
+int sendToNode(const std::string& target, const std::string& msg) {
+    auto ip = getNodeIP(target);
+
+    if (!ip) {
+        std::cerr << _("Node not found or offline: ")
+                  << target << '\n';
+        return -1;
+    }
+
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+
+    if (sock < 0) {
+        stopAfterSystemError("socket");
+        return -1;
+    }
+
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(MESSAGE_PORT);
+
+    if (inet_pton(AF_INET, ip->c_str(), &addr.sin_addr) != 1) {
+        std::cerr << _("Invalid node IP: ") << *ip << '\n';
+        close(sock);
+        return -1;
+    }
+
+    if (sendto(sock,
+               msg.data(),
+               msg.size(),
+               0,
+               reinterpret_cast<sockaddr*>(&addr),
+               sizeof(addr)) < 0) {
+        perror("sendto");
+        close(sock);
+        return -1;
+               }
+
+    close(sock);
+    return 0;
 }
 
 bool signPacket(lnos::Packet& packet,
@@ -107,7 +164,7 @@ void sender() {
 
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(PORT);
+    addr.sin_port = htons(MCAST_PORT);
 
     if (inet_pton(AF_INET, MCAST_GROUP, &addr.sin_addr) != 1) {
         stopWithError(_("Invalid multicast IPv4 address: '") + std::string(MCAST_GROUP) + "'");
@@ -190,7 +247,7 @@ void receiver() {
 
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(PORT);
+    addr.sin_port = htons(MCAST_PORT);
     addr.sin_addr.s_addr = INADDR_ANY;
 
     if (bind(sock,
@@ -326,6 +383,108 @@ void receiver() {
     close(sock);
 }
 
+void messageReceiver() {
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+
+    if (sock < 0) {
+        stopAfterSystemError("message socket");
+        return;
+    }
+
+    int reuse = 1;
+
+    if (setsockopt(sock,
+                   SOL_SOCKET,
+                   SO_REUSEADDR,
+                   &reuse,
+                   sizeof(reuse)) < 0) {
+        stopAfterSystemError("SO_REUSEADDR");
+        close(sock);
+        return;
+    }
+
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(MESSAGE_PORT);
+    addr.sin_addr.s_addr = INADDR_ANY;
+
+    if (bind(sock,
+             reinterpret_cast<sockaddr*>(&addr),
+             sizeof(addr)) < 0) {
+        stopAfterSystemError("message bind");
+        close(sock);
+        return;
+    }
+
+    timeval tv{};
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
+
+    if (setsockopt(sock,
+                   SOL_SOCKET,
+                   SO_RCVTIMEO,
+                   &tv,
+                   sizeof(tv)) < 0) {
+        stopAfterSystemError("SO_RCVTIMEO");
+        close(sock);
+        return;
+    }
+
+    char buffer[4096];
+
+    while (running) {
+        sockaddr_in senderAddr{};
+        socklen_t senderLen = sizeof(senderAddr);
+
+        ssize_t len = recvfrom(
+            sock,
+            buffer,
+            sizeof(buffer),
+            0,
+            reinterpret_cast<sockaddr*>(&senderAddr),
+            &senderLen
+        );
+
+        if (len < 0) {
+            if (errno == EAGAIN ||
+                errno == EWOULDBLOCK ||
+                errno == EINTR) {
+                continue;
+            }
+
+            stopAfterSystemError("message recvfrom");
+            break;
+        }
+
+        if (len == 0)
+            continue;
+
+        char ip[INET_ADDRSTRLEN];
+
+        if (inet_ntop(AF_INET,
+                      &senderAddr.sin_addr,
+                      ip,
+                      sizeof(ip)) == nullptr) {
+            stopAfterSystemError("inet_ntop");
+            break;
+        }
+
+        std::string message(buffer, len);
+
+        {
+            std::lock_guard<std::mutex> lock(coutMutex);
+
+            std::cout << "[message] "
+                      << ip
+                      << ": "
+                      << message
+                      << '\n';
+        }
+    }
+
+    close(sock);
+}
+
 void printer() {
     while (running) {
 
@@ -433,11 +592,10 @@ void ctlserver() {
             close(client);
             continue;
         }
-
-        std::string response;
-        std::stringstream rstream;
         std::string cmd(buffer, received);
         if (cmd == "LIST\n") {
+            std::string response;
+            std::stringstream rstream;
             {
                 std::lock_guard<std::mutex> lock(nodesMutex);
                 for (const auto& n : nodes) {
@@ -464,6 +622,22 @@ void ctlserver() {
             }
             send(client, response.data(), response.size(), 0);
             close(client);
+        } else if (cmd.starts_with("SEND")) {
+            size_t first = cmd.find(' ');
+            size_t second = cmd.find(' ', first + 1);
+
+            if (second == std::string::npos) {
+                return;
+            }
+
+            std::string target = cmd.substr(first + 1, second - first - 1);
+            std::string msg = cmd.substr(second + 1);
+
+            if (sendToNode(target, msg) == 0) {
+                std::string response = "Sent " + msg + " to " + target + "\n";
+                send(client, response.data(), response.size(), 0);
+                close(client);
+            }
         }
     }
     close(server);
@@ -494,11 +668,13 @@ int main() {
     std::thread t3(printer);
     std::thread t4(cleanup);
     std::thread t5(ctlserver);
+    std::thread t6(messageReceiver);
 
     t1.join();
     t2.join();
     t3.join();
     t4.join();
     t5.join();
+    t6.join();
     std::cout << _("LNOS is stopped.") << std::endl;
 }

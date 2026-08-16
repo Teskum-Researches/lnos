@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+
 xgettext \
   --language=C++ \
   --keyword=_ \

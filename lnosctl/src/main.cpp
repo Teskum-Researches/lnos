@@ -65,6 +65,7 @@ void printUsage(const std::string& programName) {
     std::cout << _("    config         Print the current configuration.") << std::endl;
     std::cout << _("  * set            Set a configuration property.") << std::endl;
     std::cout << _("    get            Get a configuration property.") << "\n\n";
+    std::cout << _("    send           Send message to node") << std::endl;
     std::cout << _("  * nodes          List all nodes.") << std::endl;
 
     std::cout << _("* Root privileges required.") << std::endl;
@@ -163,7 +164,41 @@ int main(int argc, char** argv) {
             std::cout.write(buffer, n);
         }
         close(sock);
-    } else {
+    } else if (command == "send") {
+        if (argc < 2) {
+            std::cerr << _("Not enough arguments") << std::endl;
+        }
+        std::string name = argv[2];
+        std::string msg = argv[3];
+
+        sockaddr_un addr{AF_UNIX};
+        strncpy(addr.sun_path, "/run/lnos/lnosd.sock", sizeof(addr.sun_path) - 1);
+
+        int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+
+        if (sock == -1) {
+            perror("socket");
+            return 1;
+        }
+
+        if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
+            perror("connect");
+            close(sock);
+            return 1;
+        }
+
+        std::string cmd = "SEND " + name + " " + msg + "\n";
+        send(sock, cmd.c_str(), strlen(cmd.c_str()), 0);
+
+        char buffer[1024];
+
+        ssize_t n;
+        while ((n = recv(sock, buffer, sizeof(buffer), 0)) > 0) {
+            std::cout.write(buffer, n);
+        }
+        close(sock);
+    }
+    else {
         printUsage(argv[0]);
         std::cerr << _("Unknown command '") << command << "'" << std::endl;
     }
